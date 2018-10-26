@@ -1,0 +1,59 @@
+import Foundation
+@testable import Demo
+<%- include("ProcessedType.swifttemplate") %>
+<%_
+func loweFirst(for name: String) -> String {
+  return "\(String(name.first!).lowercased())\(String(name.dropFirst()))"
+}
+
+func defaultValue(forProcessedType: ProcessedType) -> String? {
+  switch forProcessedType {
+  case .unknown:
+    return nil
+  case .integerType:
+    return "12345"
+  case .floatType, .doubleType:
+    return "0.12345"
+  case .stringType:
+    return "\"qqwerty\""
+  case .dateType:
+    return "Date(timeIntervalSince1970: 1514808000)"
+  case .boolType:
+    return "true"
+  case .className(let name):
+    return "\(name)()"
+  case .enumeration(_, _, let first):
+    return ".\(first)"
+  case .array(let type):
+    if let element = defaultValue(forProcessedType: type) {
+      return "[\(element)]"
+    } else {
+      return "[]"
+    }
+  case .dictionary(let key, let value):
+    if let key = defaultValue(forProcessedType: key),
+      let value = defaultValue(forProcessedType: value) {
+      return "[\(key): \(value)]"
+    } else {
+      return "[:]"
+    }
+  }
+}
+-%>
+class Container {
+  <%_ for type in types.all where type is Class { -%>
+  lazy var <%= loweFirst(for: type.name) %> = <%= type.name %>()
+  <%_ } -%>
+
+  <%_ for type in types.all where (type is Class && type.name != "Container") { -%>
+  func fillDataFor<%= type.name %>() {
+    <%_ for variable in type.variables { -%>
+    <%_ if let defValue = defaultValue(forProcessedType: processedType(for: variable)) { -%>
+    <%= loweFirst(for: type.name) %>.<%= variable.name %> = <%= defValue %>
+    <%_ } else { -%>
+    //Template can't provide default value for <%= variable.name %>
+    <%_ } -%>
+    <%_ } -%>
+  }
+  <%_ } -%>
+}

@@ -1,0 +1,136 @@
+<%_
+enum ProcessedType {
+  case unknown
+  case integerType
+  case stringType
+  case doubleType
+  case floatType
+  case dateType
+  case boolType
+  case className(String)
+  indirect case array(ProcessedType)
+  indirect case enumeration(type: ProcessedType, rawType: ProcessedType, firstCase: String)
+  indirect case dictionary(key: ProcessedType, value: ProcessedType)
+  
+  // helper for type casting
+  // [Int], [Int: User]
+  // for enums 2 possible case actual type and rawType if exists
+  func classNameAsString(rawEnums: Bool = true) -> String {
+    switch self {
+    case .unknown:
+      return "UnknownType"
+    case .integerType:
+      return "Int"
+    case .stringType:
+      return "String"
+    case .doubleType:
+      return "Double"
+    case .floatType:
+      return "Float"
+    case .dateType:
+      return "Date"
+    case .boolType:
+      return "Bool"
+    case .dictionary(let key, let value):
+      return "[\(key.classNameAsString(rawEnums: rawEnums)): \(value.classNameAsString(rawEnums: rawEnums))]"
+    case .className(let name):
+      return name
+    case .array(let type):
+      return "[\(type.classNameAsString(rawEnums: rawEnums))]"
+    case .enumeration(let type, let rawType, _):
+      return rawEnums ? rawType.classNameAsString() : type.classNameAsString()
+    }
+  }
+  
+  func enumAsSubType() -> Bool {
+    switch self {
+    case .dictionary(let key, let value):
+      return key.enumAsSubType() || value.enumAsSubType()
+    case .array(let type):
+      return type.enumAsSubType()
+    case .enumeration(_, _, _):
+      return true
+    default:
+      return false
+    }
+  }
+  
+  func unsupportedType() -> Bool {
+    switch self {
+    case .array(.enumeration(_, _, _)), .enumeration(_, _, _):
+      return false
+    default:
+      return enumAsSubType()
+    }
+  }
+}
+
+func processedType(for variable: Variable, unknownTypeAsClass: Bool = false) -> ProcessedType {
+  if let type = variable.type {
+    return processedType(forType: type)
+  } else {
+    return processedType(forTypeName: variable.typeName, unknownTypeAsClass: unknownTypeAsClass)
+  }
+}
+
+func processedType(forType: Type) -> ProcessedType {
+  if let enumType = forType as? Enum {
+    if let rawTypeName = enumType.rawTypeName?.name {
+      return .enumeration(type: .className(forType.name), rawType: .className(rawTypeName), firstCase: enumType.cases[0].name)
+    } else {
+      return .enumeration(type: .className(forType.name), rawType: .unknown, firstCase: enumType.cases[0].name)
+    }
+  } else {
+    return .className(forType.name)
+  }
+}
+
+func processedType(forTypeName: TypeName, unknownTypeAsClass: Bool = false) -> ProcessedType {
+  if let arrayType = forTypeName.array {
+    if let elementType = arrayType.elementType {
+      let elementType = processedType(forType: elementType)
+      return .array(elementType)
+    } else {
+      let elementType = processedType(forTypeName: arrayType.elementTypeName, unknownTypeAsClass: unknownTypeAsClass)
+      return .array(elementType)
+    }
+  }
+  
+  if let dictionaryType = forTypeName.dictionary {
+    var resultKey: ProcessedType?
+    var resultValue: ProcessedType?
+    if let keyType = dictionaryType.keyType {
+      resultKey = processedType(forType: keyType)
+    } else {
+      resultKey = processedType(forTypeName: dictionaryType.keyTypeName, unknownTypeAsClass: unknownTypeAsClass)
+    }
+    if let valueType = dictionaryType.valueType {
+      resultValue = processedType(forType: valueType)
+    } else {
+      resultValue = processedType(forTypeName: dictionaryType.valueTypeName, unknownTypeAsClass: unknownTypeAsClass)
+    }
+    if let resultKey = resultKey, let resultValue = resultValue {
+      return .dictionary(key: resultKey, value: resultValue)
+    } else {
+      return .dictionary(key: .unknown, value: .unknown)
+    }
+  }
+  
+  if forTypeName.unwrappedTypeName == "Int" {
+    return .integerType
+  } else if forTypeName.unwrappedTypeName == "String" {
+    return .stringType
+  } else if forTypeName.unwrappedTypeName == "Double" {
+    return .doubleType
+  } else if forTypeName.unwrappedTypeName == "Float" {
+    return .floatType
+  } else if forTypeName.unwrappedTypeName == "Date" {
+    return .dateType
+  } else if forTypeName.unwrappedTypeName == "Bool" {
+    return .boolType
+  } else {
+    /* Apple(or unknown) classes should be added here */
+    return unknownTypeAsClass ? .className(forTypeName.unwrappedTypeName) : .unknown
+  }
+}
+-%>

@@ -1,0 +1,217 @@
+<%- include("ProcessedType.swifttemplate") %>
+<%_
+enum FunctionBodyType {
+  case encodeNSCoding
+  case decodeNSCoding
+  case encodeCodable
+  case decodeCodable
+}
+
+func loweFirst(for name: String) -> String {
+  return "\(String(name.first!).lowercased())\(String(name.dropFirst()))"
+}
+
+func error(for type: FunctionBodyType, variable: Variable) -> String {
+  return "//Can't generate \(type) representation for \(variable.name): \(variable.typeName.name)"
+}
+
+func initCodableEntry(for variable: Variable) -> String? {
+  guard variable.annotations["skipCodable"] == nil else { return  nil }
+  if variable.typeName.isOptional {
+    return "\(variable.name) = try container.decodeIfPresent(\(variable.unwrappedTypeName).self, forKey: .\(variable.name))"
+  } else {
+    return "\(variable.name) = try container.decode(\(variable.unwrappedTypeName).self, forKey: .\(variable.name))"
+  }
+}
+
+func encodeCodableEntry(for variable: Variable) -> String? {
+  guard variable.annotations["skipCodable"] == nil else { return  nil }
+  return "try container.encode(\(variable.name), forKey: .\(variable.name))"
+}
+
+func nonOptionalNSCodingEntry(for variable: Variable) -> String? {
+  guard variable.annotations["skipCodable"] == nil else { return  nil }
+  guard variable.typeName.isOptional == false else { return nil }
+  let type = processedType(for: variable, unknownTypeAsClass: true)
+  
+  switch type {
+  case .integerType:
+    return "\(variable.name) = aDecoder.decodeInteger(forKey: CodingKeys.\(variable.name).rawValue)"
+  case .doubleType:
+    return "\(variable.name) = aDecoder.decodeDouble(forKey: CodingKeys.\(variable.name).rawValue)"
+  case .floatType:
+    return "\(variable.name) = aDecoder.decodeFloat(forKey: CodingKeys.\(variable.name).rawValue)"
+  case .boolType:
+    return "\(variable.name) = aDecoder.decodeBool(forKey: CodingKeys.\(variable.name).rawValue)"
+  case .enumeration(let type, let rawType, _):
+    if rawType.classNameAsString() == "Int" {
+      return "self.\(variable.name) = \(type.classNameAsString())(aDecoder.decodeInteger(forKey: CodingKeys.\(variable.name).rawValue)) ?? \(variable.defaultValue!)"
+    } else {
+      return "self.\(variable.name) = \(type.classNameAsString())(\(variable.name)) ?? \(variable.defaultValue!)"
+    }
+  case .array(.enumeration(let enumerationType, _, _)):
+    return "self.\(variable.name) = \(variable.name).compactMap(\(enumerationType.classNameAsString()).init)"
+  default:
+    if type.enumAsSubType() {
+      return "// Nested arrays or dictionaries with enums can't be handled a.t.m. \(variable.name)"
+    } else {
+      return "self.\(variable.name) = \(variable.name)"
+    }
+  }
+}
+
+func optionalNSCodingEntry(for variable: Variable) -> String? {
+  guard variable.annotations["skipCodable"] == nil else { return  nil }
+  guard variable.typeName.isOptional == true else { return nil }
+  let type = processedType(for: variable, unknownTypeAsClass: true)
+  
+  switch type {
+  case let .enumeration(enumType, rawType, _):
+    return "\(variable.name) = \(enumType.classNameAsString())(aDecoder.decodeObject(forKey: CodingKeys.\(variable.name).rawValue) as? \(rawType.classNameAsString()))"
+  case let .array(.enumeration(enumerationType, _, _)):
+    return "\(variable.name) = (aDecoder.decodeObject(forKey: CodingKeys.\(variable.name).rawValue) as? \(type.classNameAsString()))?.compactMap(\(enumerationType.classNameAsString()).init)"
+  default:
+    if type.enumAsSubType() {
+      return "// Nested arrays or dictionaries with enums can't be handled a.t.m. \(variable.name)"
+    } else {
+      return "\(variable.name) = aDecoder.decodeObject(forKey: CodingKeys.\(variable.name).rawValue) as? \(type.classNameAsString())"
+    }
+  }
+}
+
+func guardNSCodingEntry(for variable: Variable) -> String? {
+  guard variable.annotations["skipCodable"] == nil else { return  nil }
+  guard variable.typeName.isOptional == false else { return nil }
+  let type = processedType(for: variable, unknownTypeAsClass: true)
+  
+  switch type {
+  case .stringType, .dateType, .className(_), .array(_), .dictionary(_, _):
+    return "guard let \(variable.name) = aDecoder.decodeObject(forKey: CodingKeys.\(variable.name).rawValue) as? \(type.classNameAsString()) else { return nil }"
+  case let .enumeration(_, rawType, _):
+    if rawType.classNameAsString() == "Int" {
+      return nil
+    } else {
+      return "guard let \(variable.name) = aDecoder.decodeObject(forKey: CodingKeys.\(variable.name).rawValue) as? \(type.classNameAsString()) else { return nil }"
+    }
+  default:
+    return nil
+  }
+}
+
+func encodeNSCodingEntry(for variable: Variable) -> String? {
+  guard variable.annotations["skipCodable"] == nil else { return  nil }
+  
+  let type = processedType(for: variable, unknownTypeAsClass: true)
+  let op = variable.typeName.isOptional
+  
+  switch type {
+  case .enumeration(_, _, _):
+    return "aCoder.encode(\(variable.name)\(op ? "?": "").rawValue, forKey: CodingKeys.\(variable.name).rawValue)"
+  case let .array(.enumeration(_, _, _)):
+    return "aCoder.encode(\(variable.name)\(op ? "?": "").map { $0.rawValue }, forKey: CodingKeys.\(variable.name).rawValue)"
+  default:
+    if type.enumAsSubType() {
+      return "// Nested arrays or dictionaries with enums can't be handled a.t.m. \(variable.name)"
+    } else {
+      return "aCoder.encode(\(variable.name), forKey: CodingKeys.\(variable.name).rawValue)"
+    }
+  }
+}
+-%>
+  
+<%_ for type in types.all where type is Enum { -%>
+<%_ if let enumType = type as? Enum, let rawTypeName = enumType.rawTypeName?.name { -%>
+extension <%= type.name %> {
+  init?(_ value: <%= rawTypeName %>?) {
+    guard let value = value else { return nil }
+    self.init(rawValue: value)
+  }
+}
+<%_ } -%>
+<%_ } -%>
+
+<%_ for type in types.all { -%>
+// sourcery:inline:<%= type.name %>.CodingKeys
+  enum CodingKeys: String, CodingKey {
+    <%_ for variable in type.variables { -%>
+    case <%= variable.name %><% if let rawKey = variable.annotations["rawKey"] { %> = "<%= rawKey %>"<% } %>
+    <%_ } -%>
+  }
+// sourcery:end
+  
+// sourcery:inline:<%= type.name %>.CodableInit
+  required init(from decoder: Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    <%_ for variable in type.variables { -%>
+      <%_ if let decodeCodable = initCodableEntry(for: variable) { -%>
+      <%= decodeCodable %>
+      <%_ } else { -%>
+      <%= error(for: .decodeCodable, variable: variable) %>
+      <%_ } -%>
+    <%_ } -%>
+  }
+// sourcery:end
+  
+// sourcery:inline:<%= type.name %>.CodableEncode
+  func encode(to encoder: Encoder) throws {
+    var container = encoder.container(keyedBy: CodingKeys.self)
+    <%_ for variable in type.variables { -%>
+      <%_ if let encodeCodable = encodeCodableEntry(for: variable) { -%>
+      <%= encodeCodable %>
+      <%_ } else { -%>
+      <%= error(for: .encodeCodable, variable: variable) %>
+      <%_ } -%>
+    <%_ } -%>
+  }
+// sourcery:end
+  
+// sourcery:inline:<%= type.name %>.NSCodingInit
+  required init?(coder aDecoder: NSCoder) {
+    //guard statements for non optional types
+    <%_ for variable in type.variables { -%>
+      <%_ if variable.typeName.isOptional == false, let guardEntry = guardNSCodingEntry(for: variable) { -%>
+        <%= guardEntry %>
+      <%_ } -%>
+    <%_ } -%>
+
+    //non optional types
+    <%_ for variable in type.variables { -%>
+      <%_ if variable.typeName.isOptional == false, let nonOptionalEntry = nonOptionalNSCodingEntry(for: variable) { -%>
+      <%= nonOptionalEntry %>
+      <%_ } -%>
+    <%_ } -%>
+
+    //optional types
+    <%_ for variable in type.variables { -%>
+      <%_ if variable.typeName.isOptional == true, let optionalEntry = optionalNSCodingEntry(for: variable) { -%>
+      <%= optionalEntry %>
+      <%_ } -%>
+    <%_ } -%>
+  }
+// sourcery:end
+  
+// sourcery:inline:<%= type.name %>.NSCodingEncode
+  func encode(with aCoder: NSCoder) {
+    <%_ for variable in type.variables { -%>
+      <%_ if let encodeNSCoding = encodeNSCodingEntry(for: variable) { -%>
+      <%= encodeNSCoding %>
+      <%_ } else { -%>
+      <%= error(for: .encodeNSCoding, variable: variable) %>
+      <%_ } -%>
+    <%_ } -%>
+  }
+// sourcery:end
+  
+// sourcery:inline:<%= type.name %>.IsEqual
+  override func isEqual(_ object: Any?) -> Bool {
+    guard let rhs = object as? <%= type.name %> else { return false }
+    <%_ for variable in type.variables { -%>
+      <%_ if variable.annotations["skipCodable"] == nil { -%>
+        if self.<%= variable.name %> != rhs.<%= variable.name %> { return false }
+        <%_ } -%>
+      <%_ } -%>
+    return true
+  }
+// sourcery:end
+  
+<%_ } -%>

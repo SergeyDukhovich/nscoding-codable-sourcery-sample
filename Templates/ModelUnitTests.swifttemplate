@@ -1,0 +1,66 @@
+import XCTest
+@testable import Demo
+<%- include("ProcessedType.swifttemplate") %>
+<%_
+func loweFirst(for name: String) -> String {
+  return "\(String(name.first!).lowercased())\(String(name.dropFirst()))"
+}
+-%>
+<%_ for type in types.all where (type is Class && type.name != "Container") { -%>
+
+class <%= type.name %>ModelTests: XCTestCase {
+
+  var sut: <%= type.name %>!
+  var container: Container!
+
+  override func setUp() {
+    super.setUp()
+    container = Container()
+    container.fillDataFor<%= type.name %>()
+    sut = container.<%= loweFirst(for: type.name) %>
+  }
+
+  override func tearDown() {
+    sut = nil
+    container = nil
+    super.tearDown()
+  }
+
+  func testNSCoding<%= type.name %>() {
+    let data = NSKeyedArchiver.archivedData(withRootObject: sut)
+    if let unarchivedSut = NSKeyedUnarchiver.unarchiveObject(with: data) as? <%= type.name %> {
+      <%_ for variable in type.variables { -%>
+      <%_ if variable.annotations["skipCodable"] == nil { -%>
+        <%_ if processedType(for: variable, unknownTypeAsClass: true).unsupportedType() { -%>
+        // Nested arrays or dictionaries with enums can't be handled a.t.m. <%= variable.name %>
+        <%_ } else { -%>
+        XCTAssertEqual(unarchivedSut.<%= variable.name %>, sut.<%= variable.name %>, "<%= variable.name %> assertion failed\(#line)")
+        <%_ } -%>
+      <%_ } -%>
+      <%_ } -%>
+    } else {
+      XCTFail("<%= type.name %> NSCoding failed")
+    }
+  }
+
+  func testCodable<%= type.name %>() {
+    do {
+      let encoder = JSONEncoder()
+      let data = try encoder.encode(sut)
+      let decoder = JSONDecoder()
+      let decodedSut = try decoder.decode(<%= type.name %>.self, from: data)
+      <%_ for variable in type.variables { -%>
+      <%_ if variable.annotations["skipCodable"] == nil { -%>
+      <%_ if processedType(for: variable, unknownTypeAsClass: true).unsupportedType() { -%>
+      // Nested arrays or dictionaries with enums can't be handled a.t.m. <%= variable.name %>
+      <%_ } else { -%>
+      XCTAssertEqual(decodedSut.<%= variable.name %>, sut.<%= variable.name %>, "<%= variable.name %> assertion failed\(#line)")
+      <%_ } -%>
+      <%_ } -%>
+      <%_ } -%>
+    } catch {
+      XCTFail("<%= type.name %> Codable failed")
+    }
+  }
+}
+<%_ } -%>
