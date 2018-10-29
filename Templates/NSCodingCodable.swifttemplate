@@ -143,8 +143,8 @@ extension <%= type.name %> {
   required init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: CodingKeys.self)
     <%_ for variable in type.variables { -%>
-      <%_ if let decodeCodable = initCodableEntry(for: variable) { -%>
-      <%= decodeCodable %>
+      <%_ if let initCodable = initCodableEntry(for: variable) { -%>
+      <%= initCodable %>
       <%_ } else { -%>
       <%= error(for: .decodeCodable, variable: variable) %>
       <%_ } -%>

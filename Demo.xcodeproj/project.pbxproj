@@ -23,6 +23,7 @@
 		8061F10D214A957300CC94CD /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 8061F0FC214A957200CC94CD /* Main.storyboard */; };
 		8061F111214A957300CC94CD /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8061F102214A957200CC94CD /* ViewController.swift */; };
 		D7258B5E2D70BA1B6B15BB87 /* Pods_Demo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9896C81F7FDFB076260B30CA /* Pods_Demo.framework */; };
+		E947B0CD2187A62200A2E6C3 /* TemplateOverusing.swifttemplate in Resources */ = {isa = PBXBuildFile; fileRef = E947B0CC2187A62200A2E6C3 /* TemplateOverusing.swifttemplate */; };
 		E953CDAE2157CB7E0064F18F /* User.swift in Sources */ = {isa = PBXBuildFile; fileRef = E953CDAD2157CB7E0064F18F /* User.swift */; };
 		E953CDB02157CB9C0064F18F /* UserGender.swift in Sources */ = {isa = PBXBuildFile; fileRef = E953CDAF2157CB9C0064F18F /* UserGender.swift */; };
 		E953CDB22157CBD60064F18F /* ImageResource.swift in Sources */ = {isa = PBXBuildFile; fileRef = E953CDB12157CBD60064F18F /* ImageResource.swift */; };
@@ -76,6 +77,7 @@
 		84217CE6B128CABE37CE7030 /* Pods-Demo.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Demo.release.xcconfig"; path = "Pods/Target Support Files/Pods-Demo/Pods-Demo.release.xcconfig"; sourceTree = "<group>"; };
 		97F4DF66062E69C4DEA61880 /* Pods-DemoTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-DemoTests.debug.xcconfig"; path = "Pods/Target Support Files/Pods-DemoTests/Pods-DemoTests.debug.xcconfig"; sourceTree = "<group>"; };
 		9896C81F7FDFB076260B30CA /* Pods_Demo.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Demo.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		E947B0CC2187A62200A2E6C3 /* TemplateOverusing.swifttemplate */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = TemplateOverusing.swifttemplate; sourceTree = "<group>"; };
 		E953CDAD2157CB7E0064F18F /* User.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = User.swift; sourceTree = "<group>"; };
 		E953CDAF2157CB9C0064F18F /* UserGender.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserGender.swift; sourceTree = "<group>"; };
 		E953CDB12157CBD60064F18F /* ImageResource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageResource.swift; sourceTree = "<group>"; };
@@ -89,8 +91,8 @@
 		E953CDFD2158158E0064F18F /* GodObject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GodObject.swift; sourceTree = "<group>"; };
 		E997C6BC217A72CC00F1D617 /* SuperUser.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SuperUser.swift; sourceTree = "<group>"; };
 		E997C6BE217A73CE00F1D617 /* NSCodingCodable.generated.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NSCodingCodable.generated.swift; sourceTree = "<group>"; };
-		E997C6C8217A785E00F1D617 /* NSCodingCodable.swifttemplate */ = {isa = PBXFileReference; lastKnownFileType = text; path = NSCodingCodable.swifttemplate; sourceTree = "<group>"; };
-		E997C6C9217A785E00F1D617 /* ProcessedType.swifttemplate */ = {isa = PBXFileReference; lastKnownFileType = text; path = ProcessedType.swifttemplate; sourceTree = "<group>"; };
+		E997C6C8217A785E00F1D617 /* NSCodingCodable.swifttemplate */ = {isa = PBXFileReference; lastKnownFileType = text; path = NSCodingCodable.swifttemplate; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
+		E997C6C9217A785E00F1D617 /* ProcessedType.swifttemplate */ = {isa = PBXFileReference; lastKnownFileType = text; path = ProcessedType.swifttemplate; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
 		E997C6CA217A785E00F1D617 /* ModelUnitTests.swifttemplate */ = {isa = PBXFileReference; lastKnownFileType = text; path = ModelUnitTests.swifttemplate; sourceTree = "<group>"; };
 		E997C6CB217A785E00F1D617 /* AutoCases.stencil */ = {isa = PBXFileReference; lastKnownFileType = text; path = AutoCases.stencil; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = "<none>"; };
 		E997C6CC217A785E00F1D617 /* ModelMocks.swifttemplate */ = {isa = PBXFileReference; lastKnownFileType = text; path = ModelMocks.swifttemplate; sourceTree = "<group>"; };
@@ -245,6 +247,7 @@
 				E997C6CB217A785E00F1D617 /* AutoCases.stencil */,
 				E997C6CC217A785E00F1D617 /* ModelMocks.swifttemplate */,
 				E997C6CD217A785E00F1D617 /* AutoEquatable.stencil */,
+				E947B0CC2187A62200A2E6C3 /* TemplateOverusing.swifttemplate */,
 			);
 			path = Templates;
 			sourceTree = "<group>";
@@ -350,6 +353,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E947B0CD2187A62200A2E6C3 /* TemplateOverusing.swifttemplate in Resources */,
 				8061F10D214A957300CC94CD /* Main.storyboard in Resources */,
 				8061F10C214A957300CC94CD /* LaunchScreen.storyboard in Resources */,
 				8061F104214A957300CC94CD /* Assets.xcassets in Resources */,

@@ -1,0 +1,35 @@
+  // MARK: - NSCoding
+  required init?(coder aDecoder: NSCoder) {
+  <%_ for variable in type.variables { -%>
+    <%_ if let enumType = variable.type as? Enum, enumType != nil && variable.typeName.isOptional { -%>
+    if let <%= variable.name %> = aDecoder.decodeObject(forKey: CodingKeys.<%= variable.name %>.rawValue) as? String {
+      self.<%= variable.name %> = <%= variable.unwrappedTypeName %>(rawValue: <%= variable.name %>)
+    }
+    <%_ } else if let enumType = variable.type as? Enum, enumType != nil && enumType.rawTypeName?.name == "Int" { -%>
+    let <%= variable.name %>Int = aDecoder.decodeInteger(forKey: CodingKeys.<%= variable.name %>.rawValue)
+    if let <%= variable.name %> = <%= variable.unwrappedTypeName %>(rawValue: <%= variable.name %>Int) {
+      self.<%= variable.name %> = <%= variable.name %>
+    }
+    <%_ } else if let enumType = variable.type as? Enum, enumType != nil { -%>
+    if let <%= variable.name %>Str = aDecoder.decodeObject(forKey: CodingKeys.<%= variable.name %>.rawValue) as? String,
+      let <%= variable.name %> = <%= variable.unwrappedTypeName %>(rawValue: <%= variable.name %>Str) {
+      self.<%= variable.name %> = <%= variable.name %>
+    }
+    <%_ } else if let arrayType = variable.typeName.array, let elementType = arrayType.elementType as? Enum, elementType != nil { -%>
+    if let <%= variable.name %>Array = aDecoder.decodeObject(forKey: CodingKeys.<%= variable.name %>.rawValue) as? [String] {
+      self.<%= variable.name %> = <%= variable.name %>Array.compactMap { <%= elementType.name %>(rawValue: $0) }
+    }
+    <%_ } else if variable.typeName.isOptional { -%>
+    <%= variable.name %> = aDecoder.decodeObject(forKey: CodingKeys.<%= variable.name %>.rawValue) as<% if variable.unwrappedTypeName != "AnyObject" { %>?<% } %> <%= variable.unwrappedTypeName %>
+    <%_ } else { -%>
+      <%_ if variable.typeName.unwrappedTypeName == "Int" { -%>
+    <%= variable.name %> = aDecoder.decodeInteger(forKey: CodingKeys.<%= variable.name %>.rawValue)
+      <%_ } else { -%>
+    let <%= variable.name %> = aDecoder.decodeObject(forKey: CodingKeys.<%= variable.name %>.rawValue) as? <%= variable.unwrappedTypeName %>
+    if let <%= variable.name %> = <%= variable.name %> {
+      self.<%= variable.name %> = <%= variable.name %>
+    }
+      <%_ } -%>
+    <%_ } -%>
+  <%_ } -%>
+  }
