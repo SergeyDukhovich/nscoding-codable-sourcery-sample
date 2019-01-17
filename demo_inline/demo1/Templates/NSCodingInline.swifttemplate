@@ -1,0 +1,89 @@
+<% for type in types.all where type.implements["NSCodingInlineProtocol"] != nil { -%>
+
+// sourcery:inline:<%= type.name %>.CodingKeys
+  // Generated using Sourcery 0.15.0 — https://github.com/krzysztofzablocki/Sourcery  DO NOT EDIT
+  private enum CodingKeys: String {
+<%_ for variable in type.variables { -%>
+    case <%= variable.name %><% if let rawKey = variable.annotations["rawKey"] { %> = "<%= rawKey %>"<% } %>
+<%_ } -%>
+  }
+// sourcery:end
+
+// sourcery:inline:<%= type.name %>.Init
+// Generated using Sourcery 0.15.0 — https://github.com/krzysztofzablocki/Sourcery  DO NOT EDIT
+  init(
+<%_ for index in 0..<type.variables.count { -%>
+<%_ let variable = type.variables[index] -%>
+    <%= variable.name %>: <%= variable.typeName.name %><%_ if index != type.variables.count - 1 { -%>,<%_ } %>
+<%_ } -%>
+    ) {
+<%_ for variable in type.variables { -%>
+    self.<%= variable.name %> = <%= variable.name %>
+<%_ } -%>
+  }
+// sourcery:end
+
+// sourcery:inline:<%= type.name %>.Encode
+// Generated using Sourcery 0.15.0 — https://github.com/krzysztofzablocki/Sourcery  DO NOT EDIT
+  func encode(with aCoder: NSCoder) {
+<%_ for variable in type.variables { -%>
+    aCoder.encode(<%= variable.name %>, forKey: CodingKeys.<%= variable.name %>.rawValue)
+<%_ } -%>
+  }
+// sourcery:end
+
+// sourcery:inline:<%= type.name %>.Decode
+// Generated using Sourcery 0.15.0 — https://github.com/krzysztofzablocki/Sourcery  DO NOT EDIT
+  required init?(coder aDecoder: NSCoder) {
+<%_ for variable in type.variables { -%>
+    <%= variable.name %> = aDecoder.decodeObject(forKey: CodingKeys.<%= variable.name %>.rawValue) as? <%= variable.typeName.unwrappedTypeName %>
+<%_ } -%>
+  }
+// sourcery:end
+
+
+<%_ } -%>
+
+
+/*
+
+
+init(id: String? = nil,
+name: String? = nil,
+lastName: String? = nil,
+email: String? = nil,
+avatar: URL? = nil,
+phone: String? = nil,
+birthDay: TimeInterval? = nil) {
+self.id = id
+self.name = name
+self.lastName = lastName
+self.email = email
+self.avatar = avatar
+self.phone = phone
+self.birthDay = birthDay
+}
+
+//MARK: - NSCoding
+
+func encode(with aCoder: NSCoder) {
+aCoder.encode(id, forKey: CodingKeys.id.rawValue)
+aCoder.encode(name, forKey: CodingKeys.name.rawValue)
+aCoder.encode(lastName, forKey: CodingKeys.lastName.rawValue)
+aCoder.encode(email, forKey: CodingKeys.email.rawValue)
+aCoder.encode(avatar, forKey: CodingKeys.avatar.rawValue)
+aCoder.encode(phone, forKey: CodingKeys.phone.rawValue)
+aCoder.encode(birthDay, forKey: CodingKeys.birthDay.rawValue)
+}
+
+required init?(coder aDecoder: NSCoder) {
+id = aDecoder.decodeObject(forKey: CodingKeys.id.rawValue) as? String
+name = aDecoder.decodeObject(forKey: CodingKeys.name.rawValue) as? String
+lastName = aDecoder.decodeObject(forKey: CodingKeys.lastName.rawValue) as? String
+email = aDecoder.decodeObject(forKey: CodingKeys.email.rawValue) as? String
+avatar = aDecoder.decodeObject(forKey: CodingKeys.avatar.rawValue) as? URL
+phone = aDecoder.decodeObject(forKey: CodingKeys.phone.rawValue) as? String
+birthDay = aDecoder.decodeObject(forKey: CodingKeys.birthDay.rawValue) as? TimeInterval
+}
+
+*/

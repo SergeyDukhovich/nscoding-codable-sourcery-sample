@@ -1,0 +1,44 @@
+import Foundation
+
+<% for type in types.all where type.implements["NSCodingMetaProtocol"] != nil { -%>
+<%_ if let className = type.annotations["className"] { -%>
+class <%= className %>: NSObject, NSCoding {
+
+  private enum CodingKeys: String {
+<%_ for variable in type.variables { -%>
+    case <%= variable.name %>
+<% } -%>
+  }
+
+<%_ for variable in type.variables { -%>
+  var <%= variable.name %>: <%= variable.typeName %>
+<% } -%>
+
+  init(
+<%_ for index in 0..<type.variables.count { -%>
+<%_ let variable = type.variables[index] -%>
+    <%= variable.name %>: <%= variable.typeName.name %><%_ if index != type.variables.count - 1 { -%>,<%_ } %>
+<%_ } -%>
+  ) {
+<%_ for variable in type.variables { -%>
+    self.<%= variable.name %> = <%= variable.name %>
+<% } -%>
+  }
+
+  //MARK: - NSCoding
+
+  func encode(with aCoder: NSCoder) {
+<%_ for variable in type.variables { -%>
+    aCoder.encode(<%= variable.name %>, forKey: CodingKeys.<%= variable.name %>.rawValue)
+<% } -%>
+  }
+
+  required init?(coder aDecoder: NSCoder) {
+<%_ for variable in type.variables { -%>
+    <%= variable.name %> = aDecoder.decodeObject(forKey: CodingKeys.<%= variable.name %>.rawValue) as? <%= variable.unwrappedTypeName %>
+<% } -%>
+  }
+
+}
+<% } %>
+<% } %>
